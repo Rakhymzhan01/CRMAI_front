@@ -1,8 +1,11 @@
+// app/(dashboard)/shops/[id]/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { mockDataService } from "@/lib/mock-data"
+import { ShopService } from "@/lib/services/shop-service"
+import { EmployeeService } from "@/lib/services/employee-service"
+import { ItemService } from "@/lib/services/item-service"
 import type { Shop } from "@/types/shop"
 import type { Employee } from "@/types/employee"
 import type { Item } from "@/types/item"
@@ -32,16 +35,16 @@ export default function ShopDetailPage() {
         setIsLoading(true)
 
         // Fetch shop details
-        const shopData = await mockDataService.getShopById(shopId)
+        const shopData = await ShopService.getShopById(shopId)
         setShop(shopData)
 
         if (shopData) {
           // Fetch employees for this shop
-          const employeesData = await mockDataService.getEmployeesByShop(shopId)
+          const employeesData = await EmployeeService.getEmployeesByShop(shopId)
           setEmployees(employeesData)
 
           // Fetch items for this shop
-          const itemsData = await mockDataService.getItemsByShop(shopId)
+          const itemsData = await ItemService.getItemsByShop(shopId)
           setItems(itemsData)
         }
       } catch (error) {
@@ -62,12 +65,12 @@ export default function ShopDetailPage() {
   }, [shopId, toast])
 
   const handleEmployeeUpdate = async () => {
-    const updatedEmployees = await mockDataService.getEmployeesByShop(shopId)
+    const updatedEmployees = await EmployeeService.getEmployeesByShop(shopId)
     setEmployees(updatedEmployees)
   }
 
   const handleItemUpdate = async () => {
-    const updatedItems = await mockDataService.getItemsByShop(shopId)
+    const updatedItems = await ItemService.getItemsByShop(shopId)
     setItems(updatedItems)
   }
 

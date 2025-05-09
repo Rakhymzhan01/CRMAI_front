@@ -8,6 +8,14 @@ interface LoginRequestData {
   password: string;
 }
 
+interface RegisterRequestData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  role?: string;
+}
+
 interface TokenResponse {
   token: string;
 }
@@ -51,6 +59,57 @@ export const AuthService = {
       toast({
         title: "Login Failed",
         description: error.message || "Invalid email or password",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  },
+
+  /**
+   * Register a new user
+   * @param {Object} userData - User registration data
+   * @returns {Promise<User>} - Newly created user
+   */
+  register: async (userData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    role?: string;
+  }): Promise<User> => {
+    try {
+      // Transform frontend data to match backend expectations
+      const requestData: RegisterRequestData = {
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        email: userData.email,
+        password: userData.password,
+        role: userData.role || 'user', // Default to 'user' if no role specified
+      };
+      
+      const response = await api.post("/auth/register", requestData);
+      
+      // Usually the backend responds with the created user
+      // Transform the response to match our User type
+      const user: User = {
+        id: response.id,
+        firstName: response.first_name || userData.firstName,
+        lastName: response.last_name || userData.lastName,
+        email: response.email,
+        role: response.role,
+      };
+      
+      // Store the token if it was returned
+      if (response.token) {
+        localStorage.setItem("auth_token", response.token);
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+      
+      return user;
+    } catch (error: any) {
+      toast({
+        title: "Registration Failed",
+        description: error.message || "There was an error registering your account.",
         variant: "destructive",
       });
       throw error;

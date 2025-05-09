@@ -1,4 +1,5 @@
 // lib/api.ts
+import { ApiError } from "./error-utils"
 import { toast } from "@/hooks/use-toast"
 
 // API URL from environment variable with fallback
@@ -35,7 +36,7 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}): Promi
       if (typeof window !== "undefined") {
         window.location.href = "/login"
       }
-      throw new Error("Session expired. Please login again.")
+      throw new ApiError("Session expired. Please login again.", 401)
     }
 
     // For non-204 responses, parse the JSON if possible
@@ -46,7 +47,11 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}): Promi
 
       // If the response is not ok, throw an error
       if (!response.ok) {
-        throw new Error(data.message || `Server error: ${response.status}`)
+        throw new ApiError(
+          data.message || `Server error: ${response.status}`,
+          response.status,
+          data.error_code
+        )
       }
 
       return data
@@ -56,13 +61,21 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}): Promi
   } catch (error: any) {
     // Improve error handling for network errors
     if (error instanceof TypeError && error.message.includes("fetch")) {
-      console.error("Network error: Could not connect to the API server. Please check if the backend is running.")
-      throw new Error("Could not connect to the server. Please check your connection or try again later.")
+      console.error("Network error: Could not connect to the API server.")
+      throw new ApiError(
+        "Could not connect to the server. Please check your connection or try again later.",
+        0
+      )
+    }
+
+    // Re-throw any ApiError instances
+    if (error instanceof ApiError) {
+      throw error
     }
 
     // Re-throw any other errors
     console.error("API Error:", error)
-    throw error
+    throw new ApiError(error.message || "An unexpected error occurred", 0)
   }
 }
 
@@ -98,9 +111,10 @@ export const handleApiResponse = async <T>(
     })
     return result
   } catch (error: any) {
+    const message = error instanceof ApiError ? error.message : errorMessage
     toast({
       title: "Error",
-      description: error.message || errorMessage,
+      description: message,
       variant: "destructive",
     })
     throw error

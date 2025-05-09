@@ -1,3 +1,4 @@
+// app/login/page.tsx or app/(public)/login/page.tsx
 "use client"
 
 import { useState } from "react"
@@ -54,6 +55,11 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Function to handle registration navigation
+  const goToRegister = () => {
+    router.push("/register")
   }
 
   return (
@@ -117,8 +123,18 @@ export default function LoginPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="flex justify-center">
-          <p className="text-sm text-gray-500">Shop CRM Management System</p>
+        <CardFooter className="flex flex-col space-y-2">
+          <p className="text-sm text-gray-500 text-center">Shop CRM Management System</p>
+          <div className="text-sm text-center text-gray-500">
+            Don't have an account?
+          </div>
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={goToRegister}
+          >
+            Create a New Account
+          </Button>
         </CardFooter>
       </Card>
     </div>

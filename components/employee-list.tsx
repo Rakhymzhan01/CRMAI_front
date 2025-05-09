@@ -1,8 +1,9 @@
+// components/employee-list.tsx
 "use client"
 
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { mockDataService } from "@/lib/mock-data"
+import { EmployeeService } from "@/lib/services/employee-service"
 import type { Employee } from "@/types/employee"
 import { Button } from "@/components/ui/button"
 import {
@@ -58,14 +59,10 @@ export function EmployeeList({ employees, shopId, onUpdate }: EmployeeListProps)
     try {
       setIsSubmitting(true)
 
-      await mockDataService.createEmployee({
+      // Use EmployeeService instead of mockDataService
+      await EmployeeService.createEmployee(shopId, {
         ...data,
         shopId,
-      })
-
-      toast({
-        title: "Success",
-        description: "Employee added successfully",
       })
 
       form.reset()
@@ -73,11 +70,6 @@ export function EmployeeList({ employees, shopId, onUpdate }: EmployeeListProps)
       onUpdate()
     } catch (error) {
       console.error("Error adding employee:", error)
-      toast({
-        title: "Error",
-        description: "Failed to add employee",
-        variant: "destructive",
-      })
     } finally {
       setIsSubmitting(false)
     }
@@ -87,21 +79,12 @@ export function EmployeeList({ employees, shopId, onUpdate }: EmployeeListProps)
     try {
       setIsDeleting(employeeId)
 
-      await mockDataService.deleteEmployee(employeeId)
-
-      toast({
-        title: "Success",
-        description: "Employee removed successfully",
-      })
+      // Use EmployeeService instead of mockDataService
+      await EmployeeService.deleteEmployee(shopId, employeeId)
 
       onUpdate()
     } catch (error) {
       console.error("Error removing employee:", error)
-      toast({
-        title: "Error",
-        description: "Failed to remove employee",
-        variant: "destructive",
-      })
     } finally {
       setIsDeleting(null)
     }
@@ -111,6 +94,7 @@ export function EmployeeList({ employees, shopId, onUpdate }: EmployeeListProps)
 
   return (
     <div className="space-y-4">
+      {/* Rest of the component remains the same */}
       {canManageEmployees && (
         <div className="flex justify-end">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

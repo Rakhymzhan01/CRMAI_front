@@ -1,12 +1,15 @@
+// components/icons.tsx
 import {
   AlertTriangle,
   ArrowRight,
+  Check,
   ChevronLeft,
   ChevronRight,
   Command,
   CreditCard,
   HelpCircle,
   ImageIcon,
+  Info,
   Laptop,
   Loader2,
   Moon,
@@ -32,6 +35,8 @@ import {
 export const Icons = {
   logo: Command,
   close: X,
+  check: Check,
+  info: Info,
   spinner: Loader2,
   chevronLeft: ChevronLeft,
   chevronRight: ChevronRight,
@@ -58,5 +63,5 @@ export const Icons = {
   tag: Tag,
   shoppingBag: ShoppingBag,
   image: ImageIcon,
-  alertTriangle: AlertTriangle, // Make sure this is exported
+  alertTriangle: AlertTriangle,
 };

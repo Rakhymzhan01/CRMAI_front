@@ -1,8 +1,9 @@
+// app/(dashboard)/shops/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { mockDataService } from "@/lib/mock-data"
+import { ShopService } from "@/lib/services/shop-service"
 import type { Shop } from "@/types/shop"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -53,14 +54,19 @@ export default function ShopsPage() {
       let fetchedShops: Shop[] = []
 
       if (user?.role === "admin") {
-        fetchedShops = await mockDataService.getShops()
+        fetchedShops = await ShopService.getShops()
       } else if (user?.role === "owner") {
-        fetchedShops = await mockDataService.getShopsByOwner(user.id)
+        fetchedShops = await ShopService.getShopsByOwner()
       }
 
       setShops(fetchedShops)
     } catch (error) {
       console.error("Error fetching shops:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch shops",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -79,10 +85,10 @@ export default function ShopsPage() {
       // Create shop with owner ID if user is owner
       const shopData = {
         ...data,
-        ownerId: user?.role === "owner" ? user.id : 2, // Default to owner ID 2 if admin
+        ownerId: user?.id,
       }
 
-      await mockDataService.createShop(shopData)
+      await ShopService.createShop(shopData)
 
       toast({
         title: "Success",
@@ -104,6 +110,7 @@ export default function ShopsPage() {
     }
   }
 
+  // Rest of the component remains the same - the UI doesn't change
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -121,6 +128,7 @@ export default function ShopsPage() {
               </Button>
             </DialogTrigger>
             <DialogContent>
+              {/* Form content stays the same */}
               <DialogHeader>
                 <DialogTitle>Create New Shop</DialogTitle>
                 <DialogDescription>Add a new retail location to your management system.</DialogDescription>
@@ -128,6 +136,7 @@ export default function ShopsPage() {
 
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  {/* Form fields stay the same */}
                   <FormField
                     control={form.control}
                     name="name"

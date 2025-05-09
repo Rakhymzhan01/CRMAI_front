@@ -53,11 +53,32 @@ export const ShopService = {
   },
 
   /**
-   * Create a new shop (admin only)
-   * @param {ShopFormData & { ownerId: number }} data - Shop data
-   * @returns {Promise<void>} - Promise with result
+   * Get shop by ID
+   * @param {number} shopId - Shop ID
+   * @returns {Promise<Shop>} - Promise with shop
    */
-  createShop: async (data: ShopFormData & { ownerId: number }): Promise<void> => {
+  getShopById: async (shopId: number): Promise<Shop> => {
+    try {
+      const response = await api.get(`/owner/shops/${shopId}`);
+      
+      return {
+        id: response.id,
+        name: response.name,
+        description: response.description || '',
+        ownerId: response.owner_id
+      };
+    } catch (error) {
+      console.error(`Error fetching shop with ID ${shopId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create a new shop
+   * @param {ShopFormData & { ownerId?: number }} data - Shop data
+   * @returns {Promise<Shop>} - Promise with created shop
+   */
+  createShop: async (data: ShopFormData & { ownerId?: number }): Promise<Shop> => {
     const requestData: ShopRequestData = {
       name: data.name,
       description: data.description,
@@ -74,48 +95,37 @@ export const ShopService = {
   },
 
   /**
-   * Get shop employees
+   * Update a shop
    * @param {number} shopId - Shop ID
-   * @returns {Promise<any[]>} - Promise with employees data
+   * @param {Partial<ShopFormData>} data - Shop data to update
+   * @returns {Promise<Shop>} - Promise with updated shop
    */
-  getShopEmployees: async (shopId: number): Promise<any[]> => {
-    try {
-      const response = await api.get(`/owner/shops/${shopId}/employees`);
-      return Array.isArray(response) ? response : [];
-    } catch (error) {
-      console.error(`Error fetching employees for shop ${shopId}:`, error);
-      throw error;
-    }
-  },
-
-  /**
-   * Add employee to shop
-   * @param {number} shopId - Shop ID
-   * @param {any} employeeData - Employee data
-   * @returns {Promise<void>} - Promise with result
-   */
-  addEmployee: async (shopId: number, employeeData: any): Promise<void> => {
+  updateShop: async (shopId: number, data: Partial<ShopFormData>): Promise<Shop> => {
+    const requestData: Partial<ShopRequestData> = {};
+    
+    if (data.name !== undefined) requestData.name = data.name;
+    if (data.description !== undefined) requestData.description = data.description;
+    
     return handleApiResponse(
-      api.post(`/owner/shops/${shopId}/employees`, employeeData),
+      api.put(`/owner/shops/${shopId}`, requestData),
       {
-        successMessage: "Employee added successfully",
-        errorMessage: "Failed to add employee"
+        successMessage: "Shop updated successfully", 
+        errorMessage: "Failed to update shop"
       }
     );
   },
 
   /**
-   * Remove employee from shop
+   * Delete a shop
    * @param {number} shopId - Shop ID
-   * @param {number} employeeId - Employee ID
    * @returns {Promise<void>} - Promise with result
    */
-  removeEmployee: async (shopId: number, employeeId: number): Promise<void> => {
+  deleteShop: async (shopId: number): Promise<void> => {
     return handleApiResponse(
-      api.delete(`/owner/shops/${shopId}/employees/${employeeId}`),
+      api.delete(`/admin/shops/${shopId}`),
       {
-        successMessage: "Employee removed successfully",
-        errorMessage: "Failed to remove employee"
+        successMessage: "Shop deleted successfully",
+        errorMessage: "Failed to delete shop"
       }
     );
   }

@@ -1,7 +1,8 @@
+// components/item-list.tsx
 "use client"
 
 import { useState } from "react"
-import { mockDataService } from "@/lib/mock-data"
+import { ItemService } from "@/lib/services/item-service"
 import type { Item } from "@/types/item"
 import { Button } from "@/components/ui/button"
 import {
@@ -64,15 +65,11 @@ export function ItemList({ items, shopId, onUpdate }: ItemListProps) {
     try {
       setIsSubmitting(true)
 
-      await mockDataService.createItem({
+      // Use ItemService instead of mockDataService
+      await ItemService.createItem(shopId, {
         ...data,
         shopId,
         photoUrl: data.photoUrl || "https://placehold.co/300x300",
-      })
-
-      toast({
-        title: "Success",
-        description: "Item added successfully",
       })
 
       form.reset()
@@ -80,11 +77,6 @@ export function ItemList({ items, shopId, onUpdate }: ItemListProps) {
       onUpdate()
     } catch (error) {
       console.error("Error adding item:", error)
-      toast({
-        title: "Error",
-        description: "Failed to add item",
-        variant: "destructive",
-      })
     } finally {
       setIsSubmitting(false)
     }
@@ -94,28 +86,19 @@ export function ItemList({ items, shopId, onUpdate }: ItemListProps) {
     try {
       setIsDeleting(itemId)
 
-      await mockDataService.deleteItem(itemId)
-
-      toast({
-        title: "Success",
-        description: "Item removed successfully",
-      })
+      // Use ItemService instead of mockDataService
+      await ItemService.deleteItem(shopId, itemId)
 
       onUpdate()
     } catch (error) {
       console.error("Error removing item:", error)
-      toast({
-        title: "Error",
-        description: "Failed to remove item",
-        variant: "destructive",
-      })
     } finally {
       setIsDeleting(null)
     }
   }
 
   const categories = ["Pants", "Shirts", "Dresses", "Jackets", "Shoes", "Accessories", "Jewelry"]
-
+  
   return (
     <div className="space-y-4">
       <div className="flex justify-end">

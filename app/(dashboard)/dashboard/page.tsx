@@ -1,16 +1,21 @@
+// app/(dashboard)/dashboard/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { mockDataService } from "@/lib/mock-data"
+import { ShopService } from "@/lib/services/shop-service"
+import { EmployeeService } from "@/lib/services/employee-service"
+import { ItemService } from "@/lib/services/item-service"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Icons } from "@/components/icons"
 import type { Shop } from "@/types/shop"
 import type { Employee } from "@/types/employee"
 import type { Item } from "@/types/item"
+import { useToast } from "@/hooks/use-toast"
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const { toast } = useToast()
   const [stats, setStats] = useState({
     shops: 0,
     employees: 0,
@@ -27,9 +32,9 @@ export default function DashboardPage() {
         // Fetch shops based on user role
         let shops: Shop[] = []
         if (user?.role === "admin") {
-          shops = await mockDataService.getShops()
+          shops = await ShopService.getShops()
         } else if (user?.role === "owner") {
-          shops = await mockDataService.getShopsByOwner(user.id)
+          shops = await ShopService.getShopsByOwner()
         }
 
         // Fetch employees and items for each shop
@@ -37,10 +42,10 @@ export default function DashboardPage() {
         let allItems: Item[] = []
 
         for (const shop of shops) {
-          const employees = await mockDataService.getEmployeesByShop(shop.id)
+          const employees = await EmployeeService.getEmployeesByShop(shop.id)
           allEmployees = [...allEmployees, ...employees]
 
-          const items = await mockDataService.getItemsByShop(shop.id)
+          const items = await ItemService.getItemsByShop(shop.id)
           allItems = [...allItems, ...items]
         }
 
@@ -55,6 +60,11 @@ export default function DashboardPage() {
         })
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard data",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
@@ -65,7 +75,6 @@ export default function DashboardPage() {
     }
   }, [user])
 
-  // Stat cards data
   const statCards = [
     {
       title: "Total Shops",
