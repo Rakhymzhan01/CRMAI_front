@@ -1,12 +1,11 @@
 "use client"
 
 import type React from "react"
-
 import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import type { User } from "@/types/user"
-import { mockDataService } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
+import { AuthService } from "./services/auth-service"
 
 interface AuthContextType {
   user: User | null
@@ -33,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
 
-        const currentUser = await mockDataService.getCurrentUser()
+        const currentUser = await AuthService.getCurrentUser()
         setUser(currentUser)
       } catch (error) {
         console.error("Auth check error:", error)
@@ -61,18 +60,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true)
-      const { user, token } = await mockDataService.login(email, password)
-
-      // Store user ID in localStorage for persistence
-      localStorage.setItem("userId", user.id.toString())
-
-      setUser(user)
-      router.push("/dashboard")
-
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${user.firstName}!`,
-      })
+      const response = await AuthService.login(email, password)
+      
+      if (response && response.token) {
+        // Get user details after successful login
+        const currentUser = await AuthService.getCurrentUser()
+        setUser(currentUser)
+        
+        router.push("/dashboard")
+        
+        toast({
+          title: "Login successful",
+          description: `Welcome back${currentUser ? ', ' + currentUser.firstName : ''}!`,
+        })
+      }
     } catch (error: any) {
       toast({
         title: "Login failed",
@@ -86,9 +87,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = () => {
-    localStorage.removeItem("userId")
+    AuthService.logout()
     setUser(null)
     router.push("/login")
+    
     toast({
       title: "Logged out",
       description: "You have been successfully logged out",

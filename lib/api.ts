@@ -1,6 +1,8 @@
+// lib/api.ts
 import { toast } from "@/hooks/use-toast"
 
-const API_URL = "http://localhost:8080"
+// API URL from environment variable with fallback
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 // Helper to get the auth token
 const getToken = () => {
@@ -29,19 +31,22 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}): Promi
     // Handle 401 Unauthorized - redirect to login
     if (response.status === 401) {
       localStorage.removeItem("auth_token")
+      localStorage.removeItem("user")
       if (typeof window !== "undefined") {
         window.location.href = "/login"
       }
       throw new Error("Session expired. Please login again.")
     }
 
-    // For non-204 responses, parse the JSON
+    // For non-204 responses, parse the JSON if possible
     if (response.status !== 204) {
-      const data = await response.json()
+      // Check if there's content to parse
+      const text = await response.text()
+      const data = text ? JSON.parse(text) : {}
 
       // If the response is not ok, throw an error
       if (!response.ok) {
-        throw new Error(data.message || "An error occurred")
+        throw new Error(data.message || `Server error: ${response.status}`)
       }
 
       return data
@@ -55,6 +60,7 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}): Promi
       throw new Error("Could not connect to the server. Please check your connection or try again later.")
     }
 
+    // Re-throw any other errors
     console.error("API Error:", error)
     throw error
   }
@@ -80,10 +86,10 @@ export const api = {
 }
 
 // Response handler for mutations with toast notifications
-export const handleApiResponse = async (
-  promise: Promise<any>,
+export const handleApiResponse = async <T>(
+  promise: Promise<T>,
   { successMessage = "Operation successful", errorMessage = "Operation failed" } = {},
-) => {
+): Promise<T> => {
   try {
     const result = await promise
     toast({

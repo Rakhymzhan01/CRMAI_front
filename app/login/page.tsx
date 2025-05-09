@@ -1,17 +1,18 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useAuth } from "@/lib/auth-context"
+import { AuthService } from "@/lib/services/auth-service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Icons } from "@/components/icons"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-
+import { useToast } from "@/hooks/use-toast"
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -21,29 +22,8 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
-  const url = 'http://localhost:8080'
-
-  async function handleLogin(data: LoginFormValues){
-    try{
-      const response = await fetch(url + '/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(
-          {
-            email: data.email, 
-            password: data.password
-          }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      
-    }
-    catch(error){
-      throw new Error('failed to Login')
-    }
-  }
-
-  const { login } = useAuth()
+  const router = useRouter()
+  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<LoginFormValues>({
@@ -54,17 +34,27 @@ export default function LoginPage() {
     },
   })
 
-  // async function onSubmit(data: LoginFormValues) {
-  //   try {
-  //     setIsLoading(true)
-  //     await login(data.email, data.password)
-  //   } catch (error: any) {
-  //     console.error("Login error:", error)
-  //     // Error is already handled by the toast in the auth context
-  //   } finally {
-  //     setIsLoading(false)
-  //   }
-  // }
+  async function onSubmit(data: LoginFormValues) {
+    try {
+      setIsLoading(true)
+      const response = await AuthService.login(data.email, data.password)
+      
+      if (response && response.token) {
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        })
+        
+        // Redirect to dashboard
+        router.push("/dashboard")
+      }
+    } catch (error: any) {
+      console.error("Login error:", error)
+      // Error is handled by the auth service toast
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-gray-50">
@@ -77,19 +67,17 @@ export default function LoginPage() {
           <Alert className="mb-4 bg-blue-50">
             <AlertDescription>
               <div className="text-sm text-blue-700">
-                <p className="font-medium">Available test accounts:</p>
+                <p className="font-medium">Available test account:</p>
                 <ul className="mt-1 list-disc pl-5">
-                  <li>Admin: admin@example.com</li>
-                  <li>Owner: owner@example.com</li>
-                  <li>User: user@example.com</li>
+                  <li>SuperAdmin: admin@crm.kz</li>
+                  <li>Password: superAdmin123</li>
                 </ul>
-                <p className="mt-1">Password: any value (not validated in demo)</p>
               </div>
             </AlertDescription>
           </Alert>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleLogin)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
