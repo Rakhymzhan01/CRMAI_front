@@ -1,8 +1,9 @@
-// app/login/page.tsx or app/(public)/login/page.tsx
+// app/login/page.tsx
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -26,6 +27,7 @@ export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -36,8 +38,13 @@ export default function LoginPage() {
   })
 
   async function onSubmit(data: LoginFormValues) {
+    // Clear any previous error messages
+    setErrorMessage(null)
+    
     try {
       setIsLoading(true)
+      console.log("Attempting login with:", { email: data.email, password: "***" })
+      
       const response = await AuthService.login(data.email, data.password)
       
       if (response && response.token) {
@@ -48,20 +55,28 @@ export default function LoginPage() {
         
         // Redirect to dashboard
         router.push("/dashboard")
+      } else {
+        // Handle case where login succeeded but no token was returned
+        setErrorMessage("Login successful but no authentication token was received")
+        console.error("Login response missing token:", response)
       }
     } catch (error: any) {
       console.error("Login error:", error)
-      // Error is handled by the auth service toast
+      
+      // Set a user-friendly error message
+      setErrorMessage(error.message || "Invalid email or password. Please try again.")
+      
+      // Also show a toast for visibility
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid email or password",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
   }
-
-  // Function to handle registration navigation
-  const goToRegister = () => {
-    router.push("/register")
-  }
-
+  
   return (
     <div className="flex h-screen w-full items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md">
@@ -81,6 +96,16 @@ export default function LoginPage() {
               </div>
             </AlertDescription>
           </Alert>
+
+          {errorMessage && (
+            <Alert className="mb-4 bg-red-50 border-red-200">
+              <AlertDescription>
+                <div className="text-sm text-red-700">
+                  {errorMessage}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -128,13 +153,14 @@ export default function LoginPage() {
           <div className="text-sm text-center text-gray-500">
             Don't have an account?
           </div>
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={goToRegister}
-          >
-            Create a New Account
-          </Button>
+          <Link href="/register" passHref>
+            <Button 
+              variant="outline" 
+              className="w-full"
+            >
+              Create a New Account
+            </Button>
+          </Link>
         </CardFooter>
       </Card>
     </div>

@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Icons } from "@/components/icons"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
 
 const registerSchema = z.object({
@@ -32,6 +33,7 @@ export default function RegisterPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -45,24 +47,45 @@ export default function RegisterPage() {
   })
 
   async function onSubmit(data: RegisterFormValues) {
+    // Clear any previous error messages
+    setErrorMessage(null)
+    
     try {
       setIsLoading(true)
+      
+      // Log the registration attempt for debugging
+      console.log("Attempting registration with:", { 
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: "***"
+      });
       
       // Remove confirmPassword before sending to API
       const { confirmPassword, ...registerData } = data;
       
+      // Call register method from AuthService
       await AuthService.register(registerData)
       
       toast({
         title: "Registration successful",
-        description: "Your account has been created!",
+        description: "Your account has been created! You can now login.",
       })
       
       // Redirect to login page after successful registration
       router.push("/login")
     } catch (error: any) {
       console.error("Registration error:", error)
-      // Error is handled by the auth service toast
+      
+      // Set a user-friendly error message
+      setErrorMessage(error.message || "Failed to create account. Please try again.")
+      
+      // Also show a toast for visibility
+      toast({
+        title: "Registration Failed",
+        description: error.message || "Failed to create account",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -76,6 +99,16 @@ export default function RegisterPage() {
           <CardDescription className="text-center">Enter your information to create an account</CardDescription>
         </CardHeader>
         <CardContent>
+          {errorMessage && (
+            <Alert className="mb-4 bg-red-50 border-red-200">
+              <AlertDescription>
+                <div className="text-sm text-red-700">
+                  {errorMessage}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
